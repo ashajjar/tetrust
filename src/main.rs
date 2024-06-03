@@ -1,7 +1,8 @@
-use std::io::{Read, Write};
-use std::ops::{Add, Sub};
+use std::io::Write;
+use std::ops::Sub;
 use std::thread;
 use std::time::{Duration, Instant};
+
 use crate::Touch::{EAST, NORTH, SOUTH, WEST};
 
 const FPS: u64 = 25;
@@ -9,10 +10,13 @@ const FPS: u64 = 25;
 fn main() {
     let width = 80;
     let height = 60;
-    let main = Frame::new(0, 0, width, height);
+    let main_frame = Frame::new(1, 1, width, height);
+    let next_block_frame = Frame::new(width + 3, 1, 30, 15);
+    let stats_frame = Frame::new(width + 3, 17, 30, 44);
+    let mut small_block = Frame::new(4, 4, 7, 3);
 
-    let x = 1;
-    let y = 1;
+    let x = 2;
+    let y = 2;
 
     let mut direction_x = 1;
     let mut direction_y = 1;
@@ -22,12 +26,24 @@ fn main() {
     let object_height = 2;
     let object_width = 4;
 
-    let mut square = Square::new(object_width, object_height, x, y, &main);
+    let mut square = Square::new(object_width, object_height, x, y, &main_frame);
 
     loop {
         let start_time = Instant::now();
 
-        main.draw();
+        reset_frame();
+        for i in (2..width - 1).step_by(8) {
+            for j in (2..height).step_by(3) {
+                small_block.x = i;
+                small_block.y = j;
+                small_block.draw();
+                println!("\u{001b}[{};{}H{}", j, i, i);
+            }
+        }
+
+        main_frame.draw();
+        next_block_frame.draw();
+        stats_frame.draw();
         square.show();
 
         match square.change_position(dx * direction_x, dy * direction_y) {
@@ -46,6 +62,11 @@ fn main() {
 
         thread::sleep(raw_fps.sub(elapsed_microseconds));
     }
+}
+
+///Resets the screen, erasing the frame to prepare for the next frame
+fn reset_frame() {
+    println!("\u{001b}[2J\u{001b}[3J");
 }
 
 
@@ -67,7 +88,7 @@ impl Frame {
     }
 
     fn draw(&self) {
-        print!("\u{001b}[2J\u{001b}[3J\u{001b}[H\u{001b}[?25l");
+        print!("\u{001b}[H\u{001b}[?25l");
 
         let top_left_corner = '\u{2554}';
         let top_right_corner = '\u{2557}';
@@ -80,23 +101,23 @@ impl Frame {
 
         let frame_color_index = 19;
         print!("\u{001b}[38;5;{}m", frame_color_index);
-        print!("\u{001b}[1;1H{}", top_left_corner);
-        for col in 2..self.width {
-            print!("\u{001b}[1;{}H{}", col, horizontal_bar);
+        print!("\u{001b}[{};{}H{}", self.y, self.x, top_left_corner);
+        for col in self.x + 1..self.x + self.width {
+            print!("\u{001b}[{};{}H{}", self.y, col, horizontal_bar);
         }
-        print!("\u{001b}[1;{}H{}", self.width, top_right_corner);
+        print!("\u{001b}[{};{}H{}", self.y, self.x + self.width, top_right_corner);
 
-        for row in 2..self.height {
-            print!("\u{001b}[{};1H{}", row, vertical_bar);
-            print!("\u{001b}[{};{}H{}", row, self.width, vertical_bar);
+        for row in self.y + 1..self.y + self.height - 1 {
+            print!("\u{001b}[{};{}H{}", row, self.x, vertical_bar);
+            print!("\u{001b}[{};{}H{}", row, self.x + self.width, vertical_bar);
         }
 
-        print!("\u{001b}[{};1H{}", self.height, bottom_left_corner);
-        for col in 2..self.width {
-            print!("\u{001b}[{};{}H{}", self.height, col, horizontal_bar);
+        print!("\u{001b}[{};{}H{}", self.y + self.height - 1, self.x, bottom_left_corner);
+        for col in self.x + 1..self.x + self.width {
+            print!("\u{001b}[{};{}H{}", self.y + self.height - 1, col, horizontal_bar);
         }
-        print!("\u{001b}[{};{}H{}", self.height, self.width, bottom_right_corner);
-
+        print!("\u{001b}[{};{}H{}", self.y + self.height - 1, self.x + self.width, bottom_right_corner);
+        print!("\u{001b}[0m");
         std::io::stdout().flush().unwrap()
     }
 
