@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::sync::{Arc, Mutex};
 use crate::frame::Frame;
-use crate::game::{GameObject, Collision};
+use crate::game::{GameObject, Collision, FramedObject, MovingObject};
 use crate::game::Collision::{EAST, NORTH, SOUTH, WEST};
 
 pub struct Square {
@@ -10,18 +10,28 @@ pub struct Square {
     x: i32,
     y: i32,
     frame: Arc<Frame>,
+    pub dy: i32,
+    pub dx: i32,
 }
 
 impl Square {
     pub(crate) fn new(width: i32, height: i32, x: i32, y: i32, frame: Arc<Frame>) -> Self {
-        Self { width, height, x, y, frame }
+        Self { width, height, x, y, frame, dy: 1, dx: 1 }
     }
 }
 
-impl Square {
+impl FramedObject for Square {
+    fn get_frame(&self) -> Arc<Frame> {
+        Arc::clone(&self.frame)
+    }
+}
+
+impl MovingObject<Square> for Square {
     /// Printing on the screen is based on index 1
-    pub(crate) fn change_position(&mut self, dx: i32, dy: i32) -> Option<Collision> {
-        if self.x + dx > self.frame.width - self.width {
+    fn change_position(&mut self) -> Option<Collision> {
+        let (dx, dy) = self.get_speed();
+        let frame = self.get_frame();
+        if self.x + dx > frame.width - self.width {
             return Some(EAST);
         }
 
@@ -30,7 +40,7 @@ impl Square {
             return Some(WEST);
         }
 
-        if self.y + dy > self.frame.height - self.height {
+        if self.y + dy > frame.height - self.height {
             return Some(SOUTH);
         }
 
@@ -41,6 +51,10 @@ impl Square {
         self.x += dx;
         self.y += dy;
         None
+    }
+
+    fn get_speed(&self) -> (i32, i32) {
+        (self.dx, self.dy)
     }
 }
 

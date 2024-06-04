@@ -8,7 +8,7 @@ mod scene;
 mod frame;
 mod square;
 
-use crate::game::{FPS};
+use crate::game::{FPS, MovingObject};
 use crate::game::Collision::{EAST, NORTH, SOUTH, WEST};
 use crate::scene::Scene;
 use crate::frame::Frame;
@@ -50,10 +50,13 @@ fn main() {
 
         scene.refresh();
 
-        match square_ref.lock().expect("Cannot find a square").change_position(dx * direction_x, dy * direction_y) {
+        let mut guard = square_ref.lock().expect("Cannot find a square");
+        guard.dx = dx * direction_x;
+        guard.dy = dy * direction_y;
+        match guard.change_position() {
             None => {}
-            Some(touch) => {
-                match touch {
+            Some(collision) => {
+                match collision {
                     SOUTH | NORTH => { direction_y = direction_y * -1 }
                     WEST | EAST => { direction_x = direction_x * -1 }
                 };
