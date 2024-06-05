@@ -1,24 +1,27 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use crate::game::GameObject;
 
 pub struct Scene {
-    objects: Vec<Arc<dyn GameObject>>,
+    objects: Vec<Arc<Mutex<dyn GameObject>>>,
 }
 
 impl Scene {
     pub fn new() -> Self {
         Self {
-            objects: vec![]
+            objects: vec![],
         }
     }
 
-    pub fn add<T>(&mut self, object: Arc<T>) where T: GameObject + 'static {
+    pub fn add(&mut self, object: Arc<Mutex<dyn GameObject>>) {
         self.objects.push(object);
     }
 
     pub fn refresh(&self) {
         self.reset();
         for object in &self.objects {
+            let mut object = object.lock().unwrap();
+            let collision = object.change_position();
+            object.on_collision(collision);
             object.draw();
         }
     }

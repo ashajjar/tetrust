@@ -1,11 +1,11 @@
 use std::io::Write;
-use crate::game::GameObject;
+use crate::game::{Collision, GameObject};
 
 pub struct Frame {
     x: i32,
     y: i32,
-    pub width: i32,
-    pub height: i32,
+    width: i32,
+    height: i32,
 }
 
 impl Frame {
@@ -52,5 +52,17 @@ impl GameObject for Frame {
         print!("\u{001b}[{};{}H{}", self.y + self.height - 1, self.x + self.width, bottom_right_corner);
         print!("\u{001b}[0m");
         std::io::stdout().flush().unwrap()
+    }
+
+    fn change_position(&mut self) -> Option<Collision> {
+        None
+    }
+
+    fn get_speed(&self) -> (i32, i32) {
+        (0, 0)
+    }
+
+    fn on_collision(&mut self, _:  Option<Collision>) {
+        ()
     }
 }
