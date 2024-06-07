@@ -62,7 +62,7 @@ impl GameObject for Frame {
         (0, 0)
     }
 
-    fn on_collision(&mut self, _:  Option<Collision>) {
+    fn on_collision(&mut self, _:  &Option<Collision>) {
         ()
     }
 }

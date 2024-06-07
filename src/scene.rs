@@ -21,7 +21,7 @@ impl Scene {
         for object in &self.objects {
             let mut object = object.lock().unwrap();
             let collision = object.change_position();
-            object.on_collision(collision);
+            object.on_collision(&collision);
             object.draw();
         }
     }

@@ -11,11 +11,13 @@ pub struct Tile {
     screen_height: i32,
     pub dy: i32,
     pub dx: i32,
+    color_index: i32,
+    content: String,
 }
 
 impl Tile {
-    pub(crate) fn new(width: i32, height: i32, x: i32, y: i32, screen_width: i32, screen_height: i32) -> Self {
-        Self { width, height, x, y, screen_width, screen_height, dy: 1, dx: 1 }
+    pub(crate) fn new(x: i32, y: i32, screen_width: i32, screen_height: i32, color_index: i32, content: String) -> Self {
+        Self { width: content.lines().next().unwrap().len() as i32, height: content.lines().count() as i32, x, y, screen_width, screen_height, dy: 1, dx: 0, color_index, content }
     }
 }
 
@@ -24,13 +26,15 @@ impl GameObject for Tile {
         assert!(self.x < self.screen_width + 1, "X cannot be greater than screen width");
         assert!(self.y < self.screen_width + 1, "Y cannot be greater than screen height");
 
-        let color_index = 166;
-        let object_line = String::from(' ').repeat(self.width as usize);
+        for (i, line) in self.content.lines().enumerate() {
+            for (j, char) in line.chars().enumerate() {
+                if char == '0' { continue; }
 
-        for i in 0..self.height {
-            print!("\u{001b}[{};{}H\u{001b}[48;5;{}m{}", self.y + i, self.x, color_index, object_line);
+                print!("\u{001b}[{};{}H\u{001b}[48;5;{}m{}", self.y + (i as i32), self.x + (j as i32), self.color_index, ' ');
+            }
         }
-        print!("\u{001b}[62;0H\u{001b}[48;5;{}m [x={},y={}]", color_index, self.x, self.y);
+
+        print!("\u{001b}[62;0H\u{001b}[48;5;{}m [x={},y={}]", self.color_index, self.x, self.y);
 
         print!("\u{001b}[0m");
 
@@ -66,7 +70,7 @@ impl GameObject for Tile {
         (self.dx, self.dy)
     }
 
-    fn on_collision(&mut self, collision: Option<Collision>) {
+    fn on_collision(&mut self, collision: &Option<Collision>) {
         match collision {
             None => {}
             Some(collision) => {
