@@ -1,5 +1,6 @@
 pub const FPS: u64 = 12;
-
+pub const WIDTH: i32 = 80;
+pub const HEIGHT: i32 = 60;
 pub trait GameObject {
     fn draw(&self);
 

@@ -4,7 +4,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use crate::frame::Frame;
-use crate::game::FPS;
+use crate::game::{FPS, HEIGHT, WIDTH};
 use crate::scene::Scene;
 use crate::tile::Tile;
 
@@ -14,12 +14,10 @@ mod frame;
 mod tile;
 
 fn main() {
-    let width = 80;
-    let height = 60;
     let mut scene = Scene::new();
-    let main_frame = Frame::new(1, 1, width, height);
-    let next_block_frame = Frame::new(width + 3, 1, 30, 15);
-    let stats_frame = Frame::new(width + 3, 17, 30, 44);
+    let main_frame = Frame::new(1, 1, WIDTH, HEIGHT);
+    let next_block_frame = Frame::new(WIDTH + 3, 1, 30, 15);
+    let stats_frame = Frame::new(WIDTH + 3, 17, 30, 44);
 
     let x = 2;
     let y = 2;
@@ -27,7 +25,7 @@ fn main() {
     let object_height = 2;
     let object_width = 4;
 
-    let square = Tile::new(object_width, object_height, x, y, width, height);
+    let square = Tile::new(object_width, object_height, x, y, WIDTH, HEIGHT);
     let main_frame_ref = Arc::new(Mutex::new(main_frame));
     let next_block_ref = Arc::new(Mutex::new(next_block_frame));
     let stats_frame_ref = Arc::new(Mutex::new(stats_frame));
