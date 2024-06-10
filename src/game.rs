@@ -6,8 +6,6 @@ pub trait GameObject {
 
     fn change_position(&mut self) -> Option<Collision>;
 
-    fn get_speed(&self) -> (i32, i32);
-
     fn on_collision(&mut self, collision: &Option<Collision>);
 }
 

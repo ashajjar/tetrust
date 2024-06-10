@@ -4,8 +4,8 @@ use crate::game::{Collision, GameObject};
 pub struct Frame {
     x: i32,
     y: i32,
-    width: i32,
-    height: i32,
+    pub(crate) width: i32,
+    pub(crate) height: i32,
 }
 
 impl Frame {
@@ -56,10 +56,6 @@ impl GameObject for Frame {
 
     fn change_position(&mut self) -> Option<Collision> {
         None
-    }
-
-    fn get_speed(&self) -> (i32, i32) {
-        (0, 0)
     }
 
     fn on_collision(&mut self, _:  &Option<Collision>) {
