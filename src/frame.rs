@@ -2,8 +2,8 @@ use std::io::Write;
 use crate::game::{Collision, GameObject};
 
 pub struct Frame {
-    x: i32,
-    y: i32,
+    pub(crate) x: i32,
+    pub(crate) y: i32,
     pub(crate) width: i32,
     pub(crate) height: i32,
 }

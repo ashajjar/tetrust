@@ -15,11 +15,14 @@ fn main() {
     let next_block_frame = Frame::new(WIDTH + 3, 1, 30, 15);
     let stats_frame = Frame::new(WIDTH + 3, 17, 30, 44);
     let mut current = Tile::generate_next(&main_frame);
-    let mut next = Tile::generate_next(&main_frame);
+    let mut next = Tile::generate_next(&next_block_frame);
 
     loop {
         let start_time = Instant::now();
         reset();
+
+        next.x = 6;
+        next.y = 3;
 
         main_frame.draw();
         next_block_frame.draw();
@@ -28,9 +31,13 @@ fn main() {
         let collision = current.change_position();
         current.on_collision(&collision);
         current.draw();
+        next.draw();
 
         if let Some(_) = collision {
-            (next, current) = (Tile::generate_next(&main_frame), next);
+            next.container = &main_frame;
+            (next, current) = (Tile::generate_next(&next_block_frame), next);
+            current.x = 30;
+            current.y = 2;
         }
 
         let end_time = Instant::now();
