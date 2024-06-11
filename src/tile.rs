@@ -134,7 +134,14 @@ impl GameObject for Tile<'_> {
             }
         }
 
-        print!("\u{001b}[62;0H\u{001b}[48;5;{}m [x={},y={}]", self.color_index, self.container.y + self.x, self.container.y + self.y);
+        print!(
+            "\u{001b}[{};{}H\u{001b}[48;5;{}m [x={},y={}]",
+            self.container.height,
+            self.container.x,
+            self.color_index,
+            self.container.y + self.x,
+            self.container.y + self.y
+        );
         print!("\u{001b}[0m");
 
         std::io::stdout().flush().unwrap()
