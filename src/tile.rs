@@ -4,8 +4,6 @@ use crate::frame::Frame;
 use crate::game::{GameObject, Collision};
 use crate::game::Collision::{EAST, NORTH, SOUTH, WEST};
 
-const MSB: u16 = 0b1000_0000_0000_0000;
-
 const SQUARE: [[u8; 16]; 8] = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -90,7 +88,7 @@ pub struct Tile<'a> {
     pub(crate) y: i32,
     pub dy: i32,
     pub dx: i32,
-    bitmap: [[u8; 16]; 8],
+    pub(crate) bitmap: [[u8; 16]; 8],
     color_index: i32,
     pub(crate) container: &'a Frame,
 }
