@@ -54,8 +54,9 @@ fn main() {
                     }
                     _ => {}
                 }
-            } else { execute_command(&receiver, &mut current); }
+            }
 
+            execute_command(&receiver, &mut current);
             let end_time = Instant::now();
             let raw_fps = Duration::from_micros(1000000 / FPS);
             let elapsed_microseconds = end_time.duration_since(start_time);
@@ -75,17 +76,24 @@ fn main() {
 fn execute_command(receiver: &Receiver<Command>, current: &mut Tile) {
     match receiver.try_recv() {
         Ok(command) => {
-            log(command.to_string().as_str(), 0);
+            log(command.to_string().as_str(), 1);
 
             match command {
-                Command::LEFT => { current.x -= 3 }
-                Command::RIGHT => { current.x += 3 }
-                Command::DOWN => { current.y += 2 }
+                Command::LEFT => {
+                    current.x -= 3;
+                }
+                Command::RIGHT => {
+                    current.x += 3;
+                }
+                Command::DOWN => {
+                    current.y += 2;
+                }
                 Command::ROTATE => { current.bitmap; }
-                Command::SMASH => { current.dy = 10 }
+                Command::SMASH => {
+                    current.dy = 10;
+                }
                 Command::NONE => {
                     current.dx = 0;
-                    current.dy = 1;
                 }
                 Command::EXIT => {
                     end_game();
@@ -136,5 +144,5 @@ fn log(message: &str, offset: i32) {
         1,
         message
     );
-    print!("\u{001b}[0m");
+    println!("\u{001b}[0m");
 }

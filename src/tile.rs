@@ -194,16 +194,6 @@ impl GameObject for Tile<'_> {
             empty_space_right
         );
         self.log(&msg[0..], 2);
-        if self.x + 16 - empty_space_right > self.container.width {
-            self.x = self.container.width + empty_space_right - 16;
-            return Some(EAST);
-        }
-
-        // 2 = 1 counting for the frame border + 1 for the starting index of the line
-        if self.x < (0 - empty_space_left) {
-            self.x = -empty_space_left + 1;
-            return Some(WEST);
-        }
 
         if self.y + self.dy > self.container.height - (9 - empty_space_height) {
             return Some(SOUTH);
@@ -211,6 +201,19 @@ impl GameObject for Tile<'_> {
 
         if self.y + self.dy < 2 {
             return Some(NORTH);
+        }
+
+        if self.x + 16 - empty_space_right > self.container.width {
+            self.x = self.container.width + empty_space_right - 16;
+            self.change_position();
+            return Some(EAST);
+        }
+
+        // 2 = 1 counting for the frame border + 1 for the starting index of the line
+        if self.x < (0 - empty_space_left) {
+            self.x = -empty_space_left + 1;
+            self.change_position();
+            return Some(WEST);
         }
 
         self.x += self.dx;
