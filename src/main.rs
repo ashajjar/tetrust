@@ -6,7 +6,7 @@ use tetrust::Getch;
 
 use crate::command::Command;
 use crate::frame::Frame;
-use crate::game::{end_game, FPS, GameObject, HEIGHT, reset, WIDTH};
+use crate::game::{Collision, end_game, FPS, GameObject, HEIGHT, reset, WIDTH};
 use crate::tile::Tile;
 
 mod game;
@@ -32,8 +32,6 @@ fn main() {
             let start_time = Instant::now();
             reset();
 
-            execute_command(&receiver, &mut current);
-
             next.x = 6;
             next.y = 3;
 
@@ -46,18 +44,27 @@ fn main() {
             current.draw();
             next.draw();
 
-            if let Some(_) = collision {
-                next.container = &main_frame;
-                (next, current) = (Tile::generate_next(&next_block_frame), next);
-                current.x = 30;
-                current.y = 2;
-            }
+            if let Some(collision) = collision {
+                match collision {
+                    Collision::SOUTH => {
+                        next.container = &main_frame;
+                        (next, current) = (Tile::generate_next(&next_block_frame), next);
+                        current.x = 30;
+                        current.y = 2;
+                    }
+                    _ => {}
+                }
+            } else { execute_command(&receiver, &mut current); }
 
             let end_time = Instant::now();
             let raw_fps = Duration::from_micros(1000000 / FPS);
             let elapsed_microseconds = end_time.duration_since(start_time);
 
-            thread::sleep(raw_fps.checked_sub(elapsed_microseconds).or(Some(raw_fps)).unwrap());
+            let fps_adjustment = raw_fps
+                .checked_sub(elapsed_microseconds)
+                .or(Some(raw_fps))
+                .unwrap();
+            thread::sleep(fps_adjustment);
         }
     });
 

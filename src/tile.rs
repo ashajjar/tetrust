@@ -16,14 +16,14 @@ const SQUARE: [[u8; 16]; 8] = [
 ];
 
 const STICK: [[u8; 16]; 8] = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
 ];
 
 const THE_T: [[u8; 16]; 8] = [
@@ -50,12 +50,12 @@ const LEFT_L: [[u8; 16]; 8] = [
 
 const RIGHT_L: [[u8; 16]; 8] = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
@@ -103,17 +103,35 @@ impl<'a> Tile<'a> {
         7
     }
 
-    fn log(&self, message: &str) {
+    fn calc_empty_space_left(&self) -> i32 {
+        for column in 0..16 {
+            for line in self.bitmap {
+                if line[column] != 0 { return column as i32; }
+            }
+        }
+        0
+    }
+
+    fn calc_empty_space_right(&self) -> i32 {
+        for column in (0..=15).rev() {
+            for line in self.bitmap {
+                if line[column] != 0 { return 15 - column as i32; }
+            }
+        }
+        0
+    }
+
+    fn log(&self, message: &str, offset: i32) {
         let clear = String::from(' ').repeat(self.container.width as usize);
         print!(
             "\u{001b}[{};{}H\u{001b}[48;5;16m {}",
-            self.container.height + 1,
+            self.container.height + offset,
             self.container.x,
             clear
         );
         print!(
             "\u{001b}[{};{}H\u{001b}[38;5;34m {}",
-            self.container.height + 1,
+            self.container.height + offset,
             self.container.x,
             message
         );
@@ -160,20 +178,30 @@ impl GameObject for Tile<'_> {
             self.container.y + self.x,
             self.container.y + self.y
         );
-        self.log(&msg[0..]);
+        self.log(&msg[0..], 1);
         std::io::stdout().flush().unwrap()
     }
 
     /// Printing on the screen is based on index 1
     fn change_position(&mut self) -> Option<Collision> {
         let empty_space_height = self.calc_empty_space_height();
+        let empty_space_left = self.calc_empty_space_left();
+        let empty_space_right = self.calc_empty_space_right();
 
-        if self.x + self.dx > self.container.width - 16 {
+        let msg = format!(
+            "[x={},y={}]",
+            empty_space_left,
+            empty_space_right
+        );
+        self.log(&msg[0..], 2);
+        if self.x + 16 - empty_space_right > self.container.width {
+            self.x = self.container.width + empty_space_right - 16;
             return Some(EAST);
         }
 
         // 2 = 1 counting for the frame border + 1 for the starting index of the line
-        if self.x + self.dx < 2 {
+        if self.x < (0 - empty_space_left) {
+            self.x = -empty_space_left + 1;
             return Some(WEST);
         }
 
