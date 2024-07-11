@@ -120,7 +120,6 @@ fn input_thread_handler(sender: Sender<Command>) {
             byte_arr[i] = c;
             i += 1;
             if i == 3 {
-                i = 0;
                 break;
             }
         }
