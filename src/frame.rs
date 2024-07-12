@@ -1,21 +1,40 @@
 use std::io::Write;
 use crate::game::{Collision, GameObject};
+use crate::tile::Tile;
 
 pub struct Frame {
     pub(crate) x: i32,
     pub(crate) y: i32,
     pub(crate) width: i32,
     pub(crate) height: i32,
+    pub(crate) frame_color_index: i32,
+    data: Vec<Vec<i32>>,
 }
 
 impl Frame {
     pub fn new(x: i32, y: i32, width: i32, height: i32) -> Self {
+        let mut data = vec![];
+
+        for _ in 0..height {
+            let mut row = vec![];
+            for _ in 0..width {
+                row.push(0);
+            }
+            data.push(row)
+        }
+
         Self {
             width,
             height,
             x,
             y,
+            frame_color_index: 19,
+            data,
         }
+    }
+
+    pub fn freeze_tile(&mut self, tile: Tile) {
+        self.frame_color_index = tile.color_index
     }
 }
 
@@ -32,8 +51,7 @@ impl GameObject for Frame {
         let horizontal_bar = '\u{2550}';
         let vertical_bar = '\u{2551}';
 
-        let frame_color_index = 19;
-        print!("\u{001b}[38;5;{}m", frame_color_index);
+        print!("\u{001b}[38;5;{}m", self.frame_color_index);
         print!("\u{001b}[{};{}H{}", self.y, self.x, top_left_corner);
         for col in self.x + 1..self.x + self.width {
             print!("\u{001b}[{};{}H{}", self.y, col, horizontal_bar);
@@ -48,6 +66,14 @@ impl GameObject for Frame {
         print!("\u{001b}[{};{}H{}", self.y + self.height - 1, self.x, bottom_left_corner);
         for col in self.x + 1..self.x + self.width {
             print!("\u{001b}[{};{}H{}", self.y + self.height - 1, col, horizontal_bar);
+        }
+        print!("\u{001b}[0m");
+        for (row, row_data) in self.data.iter().enumerate() {
+            if row == 1 { continue; }
+            for (col, cell) in row_data.iter().enumerate() {
+                if col == 1 { continue; }
+                print!("\u{001b}[{};{}H{}", row, col, cell);
+            }
         }
         print!("\u{001b}[{};{}H{}", self.y + self.height - 1, self.x + self.width, bottom_right_corner);
         print!("\u{001b}[0m");

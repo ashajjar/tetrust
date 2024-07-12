@@ -92,8 +92,8 @@ pub struct Tile<'a> {
     pub dy: i32,
     pub dx: i32,
     pub(crate) bitmap: [[u8; 16]; 8],
-    color_index: i32,
-    pub(crate) container: &'a Mutex<Frame>,
+    pub(crate) color_index: i32,
+    pub(crate) container: &'a Mutex<&'a mut Frame>,
 }
 
 impl<'a> Tile<'a> {
@@ -148,10 +148,10 @@ impl<'a> Tile<'a> {
 }
 
 impl<'a> Tile<'a> {
-    pub(crate) fn generate_next(container: &'a Mutex<Frame>) -> Tile<'a> {
+    pub(crate) fn generate_next(container: &'a Mutex<&'a mut Frame>) -> (Tile<'a>, &'a Mutex<&'a mut Frame>) {
         let color_index = rand::thread_rng().gen_range(15..232);
         let tile_index: usize = rand::thread_rng().gen_range(0..7);
-        Self {
+        (Self {
             x: 30,
             y: 2,
             container,
@@ -159,7 +159,7 @@ impl<'a> Tile<'a> {
             dy: 1,
             dx: 0,
             bitmap: TILES[tile_index],
-        }
+        }, container)
     }
 }
 

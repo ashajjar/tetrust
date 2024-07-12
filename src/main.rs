@@ -23,15 +23,15 @@ fn main() {
     });
 
     let game = thread::spawn(move || {
-        let main_frame = Frame::new(1, 1, WIDTH, HEIGHT);
-        let next_block_frame = Frame::new(WIDTH + 3, 1, 30, 15);
+        let mut main_frame = Frame::new(1, 1, WIDTH, HEIGHT);
+        let mut next_block_frame = Frame::new(WIDTH + 3, 1, 30, 15);
         let stats_frame = Frame::new(WIDTH + 3, 17, 30, 44);
 
-        let main_frame_mutex = Mutex::new(main_frame);
-        let next_block_frame_mutex = Mutex::new(next_block_frame);
+        let main_frame_mutex = Mutex::new(&mut main_frame);
+        let next_block_frame_mutex = Mutex::new(&mut next_block_frame);
 
-        let mut current = Tile::generate_next(&main_frame_mutex);
-        let mut next = Tile::generate_next(&next_block_frame_mutex);
+        let (mut current, main_frame_mutex) = Tile::generate_next(&main_frame_mutex);
+        let (mut next, mut next_block_frame_mutex) = Tile::generate_next(&next_block_frame_mutex);
 
         loop {
             let start_time = Instant::now();
@@ -58,8 +58,8 @@ fn main() {
             if let Some(collision) = collision {
                 match collision {
                     Collision::SOUTH => {
-                        next.container = &main_frame_mutex;
-                        (next, current) = (Tile::generate_next(&next_block_frame_mutex), next);
+                        next.container = freeze(current, &main_frame_mutex);
+                        ((next, next_block_frame_mutex), current) = (Tile::generate_next(&next_block_frame_mutex), next);
                         current.x = 30;
                         current.y = 2;
                     }
@@ -82,6 +82,16 @@ fn main() {
 
     input.join().expect("Failed to get input !");
     game.join().expect("Game panicked !");
+}
+
+fn freeze<'a>(tile: Tile, frame: &'a Mutex<&'a mut Frame>) -> &'a Mutex<&'a mut Frame> {
+    match frame.try_lock() {
+        Ok(mut container) => {
+            container.freeze_tile(tile);
+        }
+        Err(_) => {}
+    }
+    frame
 }
 
 fn execute_command(receiver: &Receiver<Command>, current: &mut Tile) {
