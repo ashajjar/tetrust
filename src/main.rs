@@ -1,4 +1,5 @@
 use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -25,8 +26,12 @@ fn main() {
         let main_frame = Frame::new(1, 1, WIDTH, HEIGHT);
         let next_block_frame = Frame::new(WIDTH + 3, 1, 30, 15);
         let stats_frame = Frame::new(WIDTH + 3, 17, 30, 44);
-        let mut current = Tile::generate_next(&main_frame);
-        let mut next = Tile::generate_next(&next_block_frame);
+
+        let main_frame_mutex = Mutex::new(main_frame);
+        let next_block_frame_mutex = Mutex::new(next_block_frame);
+
+        let mut current = Tile::generate_next(&main_frame_mutex);
+        let mut next = Tile::generate_next(&next_block_frame_mutex);
 
         loop {
             let start_time = Instant::now();
@@ -35,24 +40,30 @@ fn main() {
             next.x = 6;
             next.y = 3;
 
-            main_frame.draw();
-            next_block_frame.draw();
+            match main_frame_mutex.try_lock() {
+                Ok(frame) => { frame.draw() }
+                Err(_) => {}
+            };
+
+            match next_block_frame_mutex.try_lock() {
+                Ok(frame) => { frame.draw() }
+                Err(_) => {}
+            };
             stats_frame.draw();
 
             let collision = current.change_position();
-            current.on_collision(&collision);
             current.draw();
             next.draw();
 
             if let Some(collision) = collision {
                 match collision {
                     Collision::SOUTH => {
-                        next.container = &main_frame;
-                        (next, current) = (Tile::generate_next(&next_block_frame), next);
+                        next.container = &main_frame_mutex;
+                        (next, current) = (Tile::generate_next(&next_block_frame_mutex), next);
                         current.x = 30;
                         current.y = 2;
                     }
-                    _ => {}
+                    _ => { continue }
                 }
             }
 

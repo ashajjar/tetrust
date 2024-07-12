@@ -1,7 +1,10 @@
 use std::io::Write;
+use std::sync::Mutex;
+
 use rand::Rng;
+
 use crate::frame::Frame;
-use crate::game::{GameObject, Collision};
+use crate::game::{Collision, GameObject};
 use crate::game::Collision::{EAST, NORTH, SOUTH, WEST};
 
 const SQUARE: [[u8; 16]; 8] = [
@@ -90,7 +93,7 @@ pub struct Tile<'a> {
     pub dx: i32,
     pub(crate) bitmap: [[u8; 16]; 8],
     color_index: i32,
-    pub(crate) container: &'a Frame,
+    pub(crate) container: &'a Mutex<Frame>,
 }
 
 impl<'a> Tile<'a> {
@@ -122,17 +125,22 @@ impl<'a> Tile<'a> {
     }
 
     fn log(&self, message: &str, offset: i32) {
-        let clear = String::from(' ').repeat(self.container.width as usize);
+        let container = self.container.try_lock();
+        let container = match container {
+            Ok(frame) => { frame }
+            Err(_) => { return }
+        };
+        let clear = String::from(' ').repeat(container.width as usize);
         print!(
             "\u{001b}[{};{}H\u{001b}[48;5;16m {}",
-            self.container.height + offset,
-            self.container.x,
+            container.height + offset,
+            container.x,
             clear
         );
         print!(
             "\u{001b}[{};{}H\u{001b}[38;5;34m {}",
-            self.container.height + offset,
-            self.container.x,
+            container.height + offset,
+            container.x,
             message
         );
         print!("\u{001b}[0m");
@@ -140,7 +148,7 @@ impl<'a> Tile<'a> {
 }
 
 impl<'a> Tile<'a> {
-    pub(crate) fn generate_next(container: &'a Frame) -> Tile<'a> {
+    pub(crate) fn generate_next(container: &'a Mutex<Frame>) -> Tile<'a> {
         let color_index = rand::thread_rng().gen_range(15..232);
         let tile_index: usize = rand::thread_rng().gen_range(0..7);
         Self {
@@ -157,16 +165,21 @@ impl<'a> Tile<'a> {
 
 impl GameObject for Tile<'_> {
     fn draw(&self) {
-        assert!(self.x < self.container.width + 1, "X cannot be greater than screen width");
-        assert!(self.y < self.container.height + 1, "Y cannot be greater than screen height");
+        let container = self.container.try_lock();
+        let container = match container {
+            Ok(frame) => { frame }
+            Err(_) => { return }
+        };
+        assert!(self.x < container.width + 1, "X cannot be greater than screen width");
+        assert!(self.y < container.height + 1, "Y cannot be greater than screen height");
 
         for (i, line) in self.bitmap.iter().enumerate() {
             for (j, bit) in line.iter().enumerate() {
                 if *bit == 0 { continue; }
                 print!(
                     "\u{001b}[{};{}H\u{001b}[48;5;{}m{}",
-                    self.container.y + self.y + (i as i32),
-                    self.container.x + self.x + (j as i32),
+                    container.y + self.y + (i as i32),
+                    container.x + self.x + (j as i32),
                     self.color_index,
                     ' '
                 );
@@ -175,15 +188,21 @@ impl GameObject for Tile<'_> {
 
         let msg = format!(
             "[x={},y={}]",
-            self.container.y + self.x,
-            self.container.y + self.y
+            container.y + self.x,
+            container.y + self.y
         );
         self.log(&msg[0..], 1);
-        std::io::stdout().flush().unwrap()
+        print!("\u{001b}[0m");
+        std::io::stdout().flush().unwrap();
     }
 
     /// Printing on the screen is based on index 1
     fn change_position(&mut self) -> Option<Collision> {
+        let container = self.container.try_lock();
+        let container = match container {
+            Ok(frame) => { frame }
+            Err(_) => { return None }
+        };
         let empty_space_height = self.calc_empty_space_height();
         let empty_space_left = self.calc_empty_space_left();
         let empty_space_right = self.calc_empty_space_right();
@@ -195,17 +214,20 @@ impl GameObject for Tile<'_> {
         );
         self.log(&msg[0..], 2);
 
-        if self.y + self.dy > self.container.height - (9 - empty_space_height) {
+        if self.y + self.dy > container.height - (9 - empty_space_height) {
+            self.container.clear_poison();
             return Some(SOUTH);
         }
 
         if self.y + self.dy < 2 {
+            self.container.clear_poison();
             return Some(NORTH);
         }
 
-        if self.x + 16 - empty_space_right > self.container.width {
-            self.x = self.container.width + empty_space_right - 16;
+        if self.x + 16 - empty_space_right > container.width {
+            self.x = container.width + empty_space_right - 16;
             self.change_position();
+            self.container.clear_poison();
             return Some(EAST);
         }
 
@@ -213,23 +235,13 @@ impl GameObject for Tile<'_> {
         if self.x < (0 - empty_space_left) {
             self.x = -empty_space_left + 1;
             self.change_position();
+            self.container.clear_poison();
             return Some(WEST);
         }
 
         self.x += self.dx;
         self.y += self.dy;
+        self.container.clear_poison();
         None
-    }
-
-    fn on_collision(&mut self, collision: &Option<Collision>) {
-        match collision {
-            None => {}
-            Some(collision) => {
-                match collision {
-                    SOUTH | NORTH => self.dy *= -1,
-                    WEST | EAST => { self.dx *= -1 }
-                }
-            }
-        }
     }
 }

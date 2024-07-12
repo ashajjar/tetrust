@@ -8,8 +8,6 @@ pub trait GameObject {
     fn draw(&self);
 
     fn change_position(&mut self) -> Option<Collision>;
-
-    fn on_collision(&mut self, collision: &Option<Collision>);
 }
 
 pub enum Collision {
